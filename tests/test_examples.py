@@ -10,10 +10,10 @@ import dataxplan
 EXAMPLES = pathlib.Path(__file__).resolve().parent.parent / "examples"
 
 CASES = {
+    "bosch_production_hash_join.json": {"seq_scan_hot", "estimate_off", "filter_discard"},
     "job_imdb_misestimate.json": {"estimate_off", "nested_loop_blowup"},
     "nyc_taxi_sort_spill.json": {"disk_spill", "seq_scan_hot"},
     "tpch_lineitem_filter.json": {"seq_scan_hot", "filter_discard"},
-    "bosch_production_hash_join.json": {"seq_scan_hot", "estimate_off", "filter_discard"},
 }
 
 

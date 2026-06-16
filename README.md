@@ -14,24 +14,32 @@ the rest locally.
 
 ![dataxplan framework: an EXPLAIN JSON plan (and optional catalog context) flows through parse, metrics and findings into a Report you can summarise, assert on in CI, turn into JSON, compare against another plan, or render as a text tree or chart; no database connection and deterministic](assets/framework.png)
 
-It turns a plan into a deterministic read (here a query whose join was estimated
-at 5 rows but produced 500,000):
+It turns a plan into a deterministic read. Here the Bosch manufacturing example
+(`examples/`): a hash join over a 48-million-row scan of the production-line
+measurements, estimated at 300 rows but producing 288,000:
 
 ```text
 dataxplan
-  execution time   1,505.00 ms   (planning 0.30 ms)
-  nodes 3, depth 1
-  worst row estimate   100000x off
+  execution time   2,601.00 ms   (planning 0.50 ms)
+  nodes 5, depth 3
+  worst row estimate   960x off
+  spilled to disk      no
   top by self time:
-    Index Scan on b      1,000.00 ms (66%)
-    Nested Loop          450.00 ms (30%)
+    Seq Scan on measurements         2,200.00 ms (85%)
+    Hash Join                        320.00 ms (12%)
+    Seq Scan on parts                55.00 ms (2%)
+    Aggregate                        20.00 ms (1%)
+    Hash                             5.00 ms (0%)
 findings:
-  [HIGH] Row estimate is far off  (Nested Loop)
-      estimated 5 rows, actual 500,000 (100000x under-estimate)
-      -> run ANALYZE; if the columns are correlated consider extended statistics
-  [MEDIUM] Nested loop with many iterations  (Nested Loop)
-      the inner side executed 500,000 times
-      -> usually an under-estimate upstream; a hash or merge join may be cheaper
+  [HIGH] Hot sequential scan  (Seq Scan on measurements)
+      sequential scan is 85% of execution time, reading 48,000,000 rows
+      -> consider an index supporting the filter or join on measurements
+  [HIGH] Row estimate is far off  (Hash Join)
+      estimated 300 rows, actual 288,000 (960x under-estimate)
+      -> run ANALYZE on the table; if the columns are correlated consider extended statistics
+  [MEDIUM] Filter discards most rows read  (Seq Scan on parts)
+      removed 1,194,000 rows by filter but kept only 6,000
+      -> the predicate is not selective via the current access path; an index may help
 ```
 
 ## Why
@@ -126,14 +134,13 @@ runs the query, so use `analyze=False` for a plan-only estimate.
 ## Examples
 
 Four plans from public datasets and benchmarks, each showing a different problem,
-are in [`examples/`](examples/): the IMDB / Join Order Benchmark (a row
-mis-estimate), the NYC TLC taxi trips (a sort that spills to disk), TPC-H
-`lineitem` (a hot scan discarding most rows), and the Bosch Production Line
-Performance manufacturing data set (a hash join with a large mis-estimate). For
-instance:
+are in [`examples/`](examples/): the Bosch Production Line Performance
+manufacturing data set (a hash join with a large mis-estimate), the IMDB / Join
+Order Benchmark (a row mis-estimate), the NYC TLC taxi trips (a sort that spills
+to disk), and TPC-H `lineitem` (a hot scan discarding most rows). For instance:
 
 ```bash
-dataxplan examples/job_imdb_misestimate.json
+dataxplan examples/bosch_production_hash_join.json
 ```
 
 ## What is out of scope
