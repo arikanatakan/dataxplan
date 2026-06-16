@@ -16,7 +16,11 @@ the rest locally.
 
 It turns a plan into a deterministic read. Here the Bosch manufacturing example
 (`examples/`): a hash join over a 48-million-row scan of the production-line
-measurements, estimated at 300 rows but producing 288,000:
+measurements, estimated at 300 rows but producing 288,000.
+
+![dataxplan output for the Bosch example: a horizontal bar chart of self time per plan node, with the 48-million-row sequential scan of measurements dominating in a warning colour and the mis-estimated hash join also flagged](assets/example_bosch.png)
+
+The same plan as a summary:
 
 ```text
 dataxplan
