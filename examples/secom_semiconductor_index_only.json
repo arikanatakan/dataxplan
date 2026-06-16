@@ -1,0 +1,39 @@
+[
+  {
+    "Plan": {
+      "Node Type": "Aggregate",
+      "Strategy": "Plain",
+      "Startup Cost": 1700000.0,
+      "Total Cost": 1700000.1,
+      "Plan Rows": 1,
+      "Plan Width": 8,
+      "Actual Startup Time": 1800.0,
+      "Actual Total Time": 1800.1,
+      "Actual Rows": 1,
+      "Actual Loops": 1,
+      "Plans": [
+        {
+          "Node Type": "Index Only Scan",
+          "Relation Name": "process_measurements",
+          "Alias": "m",
+          "Index Name": "process_measurements_sensor_ts",
+          "Index Cond": "(sensor_id = 211)",
+          "Startup Cost": 0.5,
+          "Total Cost": 1600000.0,
+          "Plan Rows": 90000,
+          "Plan Width": 8,
+          "Actual Startup Time": 0.05,
+          "Actual Total Time": 1700.0,
+          "Actual Rows": 9000000,
+          "Actual Loops": 1,
+          "Heap Fetches": 9000000,
+          "Shared Hit Blocks": 40000,
+          "Shared Read Blocks": 120000
+        }
+      ]
+    },
+    "Planning Time": 0.3,
+    "Execution Time": 1801.0,
+    "Triggers": []
+  }
+]

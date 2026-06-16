@@ -14,6 +14,9 @@ CASES = {
     "job_imdb_misestimate.json": {"estimate_off", "nested_loop_blowup"},
     "nyc_taxi_sort_spill.json": {"disk_spill", "seq_scan_hot"},
     "tpch_lineitem_filter.json": {"seq_scan_hot", "filter_discard"},
+    "secom_semiconductor_index_only.json": {"estimate_off", "index_only_heap_fetches"},
+    "mercedes_automotive_lossy_bitmap.json": {"estimate_off", "lossy_bitmap"},
+    "garments_textile_seq_scan.json": {"seq_scan_hot", "filter_discard"},
 }
 
 

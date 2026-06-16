@@ -1,0 +1,39 @@
+[
+  {
+    "Plan": {
+      "Node Type": "Aggregate",
+      "Strategy": "Hashed",
+      "Group Key": ["p.team"],
+      "Startup Cost": 1400000.0,
+      "Total Cost": 1400012.0,
+      "Plan Rows": 12,
+      "Plan Width": 16,
+      "Actual Startup Time": 1500.0,
+      "Actual Total Time": 1500.0,
+      "Actual Rows": 12,
+      "Actual Loops": 1,
+      "Plans": [
+        {
+          "Node Type": "Seq Scan",
+          "Relation Name": "production_log",
+          "Alias": "p",
+          "Filter": "(department = 'sewing'::text)",
+          "Rows Removed by Filter": 11500000,
+          "Startup Cost": 0.0,
+          "Total Cost": 1350000.0,
+          "Plan Rows": 500000,
+          "Plan Width": 16,
+          "Actual Startup Time": 0.03,
+          "Actual Total Time": 1400.0,
+          "Actual Rows": 500000,
+          "Actual Loops": 1,
+          "Shared Hit Blocks": 20000,
+          "Shared Read Blocks": 180000
+        }
+      ]
+    },
+    "Planning Time": 0.2,
+    "Execution Time": 1501.0,
+    "Triggers": []
+  }
+]

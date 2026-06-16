@@ -1,6 +1,7 @@
 # Examples
 
-Four example plans drawn from well-known public datasets and benchmarks, each
+Seven example plans drawn from public datasets and benchmarks, across
+manufacturing (automotive, textile, semiconductor) and general workloads, each
 showing a different problem dataxplan flags. Run any of them:
 
 ```bash
@@ -8,12 +9,19 @@ dataxplan examples/bosch_production_hash_join.json
 dataxplan examples/job_imdb_misestimate.json
 dataxplan examples/nyc_taxi_sort_spill.json --tree
 dataxplan examples/tpch_lineitem_filter.json
+dataxplan examples/secom_semiconductor_index_only.json
+dataxplan examples/mercedes_automotive_lossy_bitmap.json
+dataxplan examples/garments_textile_seq_scan.json
 ```
 
-The datasets and their schemas are real and linked below; the plan structures are
-realistic for the queries shown. The exact times are illustrative (your numbers
-depend on data size, hardware and settings), so these demonstrate how dataxplan
-reads a plan rather than benchmarking the datasets themselves.
+The datasets and their schemas are real and linked below. Some (the Join Order
+Benchmark, NYC taxi, TPC-H, Bosch) are large in their own right; the
+semiconductor, automotive and textile sets are smaller research samples of
+domains that run at production scale, so those plans model a production-size
+query in the domain. In every case the plan structure is realistic and the exact
+sizes and times are illustrative (your numbers depend on data, hardware and
+settings); they show how dataxplan reads a plan rather than benchmarking the
+datasets.
 
 ## 1. Bosch Production Line Performance - a manufacturing hash join
 
@@ -67,3 +75,42 @@ hundreds of gigabytes. <https://www.tpc.org/tpch/>
 dataxplan flags `seq_scan_hot` (the scan of `lineitem` is almost all of the
 time) and `filter_discard` (it read 59 million rows and kept 2 million), which
 points at a missing index for the predicate.
+
+## 5. SECOM semiconductor - an index-only scan that hits the heap
+
+**Dataset:** SECOM, sensor and process-measurement data from a semiconductor
+manufacturing line, on the UCI Machine Learning Repository.
+<https://archive.ics.uci.edu/dataset/179/secom>
+
+**Query (shape):** aggregate the measurements for one sensor over a fab's
+`process_measurements` table.
+
+dataxplan flags `index_only_heap_fetches` (the index-only scan still made 9
+million heap fetches, so the visibility map is not set and the table needs a
+VACUUM) and `estimate_off` (the scan was estimated at 90,000 rows but returned 9
+million, 100x off).
+
+## 6. Mercedes-Benz manufacturing - a lossy bitmap scan
+
+**Dataset:** the Mercedes-Benz Greener Manufacturing data set (test-bench times
+for permutations of car features), on Kaggle.
+<https://www.kaggle.com/competitions/mercedes-benz-greener-manufacturing>
+
+**Query (shape):** scan a plant's `test_runs` for one station.
+
+dataxplan flags `lossy_bitmap` (the bitmap heap scan went lossy and rechecked 6
+million rows, so work_mem is too small for the bitmap) and `estimate_off` (50,000
+rows estimated, 8 million returned).
+
+## 7. Garment factory (textile) - a hot scan discarding most rows
+
+**Dataset:** the Productivity Prediction of Garment Employees data set, garment
+(textile) manufacturing production data, on the UCI Machine Learning Repository.
+<https://archive.ics.uci.edu/dataset/597/productivity+prediction+of+garment+employees>
+
+**Query (shape):** group a factory's `production_log` by team, filtering on the
+sewing department.
+
+dataxplan flags `seq_scan_hot` (the scan of `production_log` is most of the time)
+and `filter_discard` (it read 12 million rows and kept 500,000), which points at
+an index on the department column.

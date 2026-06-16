@@ -16,9 +16,14 @@ the rest locally.
 
 It turns a plan into a deterministic read. Here the Bosch manufacturing example
 (`examples/`): a hash join over a 48-million-row scan of the production-line
-measurements, estimated at 300 rows but producing 288,000.
+measurements, estimated at 300 rows but producing 288,000 ([Bosch Production Line
+Performance](https://www.kaggle.com/competitions/bosch-production-line-performance)).
 
 ![dataxplan output for the Bosch example: a horizontal bar chart of self time per plan node, with the 48-million-row sequential scan of measurements dominating in a warning colour and the mis-estimated hash join also flagged](assets/example_bosch.png)
+
+Each bar is a node's self (exclusive) time; the two bars in the warning colour
+are the high-severity findings (the 48-million-row `measurements` scan and the
+960x under-estimated hash join), so those are where to look first.
 
 The same plan as a summary:
 
@@ -137,11 +142,12 @@ runs the query, so use `analyze=False` for a plan-only estimate.
 
 ## Examples
 
-Four plans from public datasets and benchmarks, each showing a different problem,
-are in [`examples/`](examples/): the Bosch Production Line Performance
-manufacturing data set (a hash join with a large mis-estimate), the IMDB / Join
-Order Benchmark (a row mis-estimate), the NYC TLC taxi trips (a sort that spills
-to disk), and TPC-H `lineitem` (a hot scan discarding most rows). For instance:
+Seven plans from public datasets and benchmarks are in [`examples/`](examples/),
+including manufacturing cases across automotive (Mercedes-Benz), textile (a
+garment factory) and semiconductor (SECOM), alongside the Bosch production line,
+the Join Order Benchmark, the NYC TLC taxi trips and TPC-H. Each shows a
+different problem (a hot scan, a row mis-estimate, a disk spill, a lossy bitmap,
+an index-only scan hitting the heap). For instance:
 
 ```bash
 dataxplan examples/bosch_production_hash_join.json
