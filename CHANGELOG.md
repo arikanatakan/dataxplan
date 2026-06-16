@@ -4,14 +4,14 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project uses
 [semantic versioning](https://semver.org/).
 
-## [0.2.0] - 2026-06-17
+## [0.1.2] - 2026-06-17
 
 ### Added
 
-- `parse` (and therefore `analyze`) now accepts the text, YAML and XML EXPLAIN
-  formats in addition to JSON, auto-detected from the input. JSON, YAML and XML
-  are exact; the text format is parsed best-effort. YAML needs PyYAML
-  (`dataxplan[yaml]`); XML uses the standard library.
+- `parse` (and therefore `analyze` and the CLI) now accepts the text, YAML and
+  XML EXPLAIN formats in addition to JSON, auto-detected from the input. JSON,
+  YAML and XML are exact; the text format is parsed best-effort. YAML needs
+  PyYAML (`dataxplan[yaml]`); XML uses the standard library.
 
 ## [0.1.1] - 2026-06-17
 
