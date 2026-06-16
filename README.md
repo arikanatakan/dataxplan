@@ -14,6 +14,28 @@ the rest locally.
 
 ![dataxplan framework: an EXPLAIN JSON plan (and optional catalog context) flows through parse, metrics and findings into a Report you can summarise, assert on in CI, turn into JSON, compare against another plan, or render as a text tree or chart; no database connection and deterministic](assets/framework.png)
 
+## Problem
+
+A slow query's only honest explanation is in its `EXPLAIN` plan, but reading that
+plan by hand is hard and easy to get wrong. The reported times are per loop and
+inclusive of children, so the node that is actually slow is rarely the obvious
+one, and the row estimate that is off by orders of magnitude (the usual root
+cause of a bad plan) is buried in the output. The tools that read plans well are
+web pastebins, which means sending a production plan, with its table names and
+filter values, to someone else's server, or commercial SaaS. None of them run
+inside your own script, your tests, or your CI.
+
+## Purpose
+
+dataxplan reads the plan for you, locally and deterministically. From the output
+of `EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)` it builds the plan tree, computes the
+numbers people misread (self time, estimation error, disk spills), flags
+documented problems with an explanation and a suggested action, compares two
+plans for regression, and lets you assert on a plan in CI so a change that
+degrades it fails the build. It needs no database connection, has no runtime
+dependencies, and every result is reproducible. The findings are documented
+heuristics, not guarantees, and the analysis is of the plan you provide.
+
 It turns a plan into a deterministic read. Here the Bosch manufacturing example
 (`examples/`): a hash join over a 48-million-row scan of the production-line
 measurements, estimated at 300 rows but producing 288,000 ([Bosch Production Line
@@ -43,14 +65,7 @@ findings:
       -> the predicate is not selective via the current access path; an index may help
 ```
 
-## Why
-
-Reading a plan by hand is error-prone (self time is per-loop and inclusive of
-children, so the slow node is rarely the obvious one). The good tools that do
-this are web pastebins (your production plan leaves your machine) or commercial
-SaaS. dataxplan is local, free, programmatic and embeddable: run it in a script,
-a notebook, your CI, or later an MCP server, and keep the plan in your own
-environment.
+## Install
 
 ```bash
 pip install dataxplan
