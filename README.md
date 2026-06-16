@@ -269,6 +269,25 @@ The `production_log` scan reads 12 million rows to keep 500,000 (red).
 **Action:** add an index on the `department` column so the filter uses the index
 instead of a full scan.
 
+## Limitations and Constraints
+
+- **PostgreSQL only.** It parses PostgreSQL `EXPLAIN (FORMAT JSON)`; other engines
+  are not supported yet, and the text format is not parsed (use `FORMAT JSON`).
+- **ANALYZE is needed for timing.** Without `ANALYZE` there are no actual times or
+  row counts, so self time, estimation error and the timing-based findings are
+  unavailable; the plan still parses and its structure is reported.
+- **Plan-only view.** Without the optional context it does not know your schema,
+  indexes, statistics or selectivity, so the findings are heuristic pointers, not
+  verdicts; some (hot scan, filter discard, nested loop) can be false positives
+  when the chosen path is in fact optimal.
+- **Thresholds are defaults.** The cut-offs (for example 100x estimation error or
+  30% self time) are reasonable calibrations, not universal constants; override
+  them with `thresholds=`.
+- **One captured run.** EXPLAIN ANALYZE times depend on machine, cache and load, so
+  the analysis reflects the run you captured, not an average over runs.
+- **One statement at a time.** It analyses a single plan; it does not aggregate a
+  workload or parse server logs.
+
 ## What is out of scope
 
 dataxplan analyses the **plan you give it**. By default it does not connect to a
