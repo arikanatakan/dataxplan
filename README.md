@@ -36,6 +36,31 @@ degrades it fails the build. It needs no database connection, has no runtime
 dependencies, and every result is reproducible. The findings are documented
 heuristics, not guarantees, and the analysis is of the plan you provide.
 
+## Methodology
+
+The metrics are computed directly from the fields PostgreSQL documents for
+`EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)`, so they are arithmetic on the plan,
+not numbers of our own. For a node `n` with children `C(n)`:
+
+- de-looped total (inclusive) time:
+  `total(n) = Actual Total Time(n) × Actual Loops(n)`
+- self (exclusive) time, the work done at the node itself:
+  `self(n) = total(n) − Σ total(c) for c in C(n)`
+- share of the query's time:
+  `pct(n) = self(n) / Execution Time`
+- row estimation error, per loop (both counts floored at 1):
+  `factor(n) = Actual Rows(n) / Plan Rows(n)` and
+  `error(n) = max(factor(n), 1 / factor(n))`
+- a sort or hash spilled to disk when `Sort Method` contains `external`, or
+  `Hash Batches > 1`, or `Temp Written Blocks > 0`.
+
+`Actual Total Time` is reported per loop and inclusive of children, which is why
+both the de-looping (`× Actual Loops`) and subtracting the children matter:
+together they reveal the node where the time is actually spent, not the one at
+the top of the plan. The findings are documented heuristics applied on top of
+these metrics (sources in [References](#references-and-validation)); they are
+pointers, not guarantees.
+
 It turns a plan into a deterministic read. Here the Bosch manufacturing example
 (`examples/`): a hash join over a 48-million-row scan of the production-line
 measurements, estimated at 300 rows but producing 288,000 ([Bosch Production Line
@@ -264,11 +289,24 @@ does not rewrite SQL or invent a cost model. It targets PostgreSQL
 ## References and validation
 
 The metric arithmetic is verified by hand against the semantics PostgreSQL
-documents (see [`tests/`](tests/)), and the heuristics are grounded in primary
-and academic sources, written in our own words:
+documents (see [`tests/`](tests/)). Each finding is grounded in the documented
+behaviour it relies on, written in our own words:
+
+| Finding | Source |
+| --- | --- |
+| `estimate_off` | PostgreSQL: [planner statistics](https://www.postgresql.org/docs/current/planner-stats.html), [CREATE STATISTICS](https://www.postgresql.org/docs/current/sql-createstatistics.html); Leis et al. (2015) |
+| `seq_scan_hot` | PostgreSQL: [Using EXPLAIN](https://wiki.postgresql.org/wiki/Using_EXPLAIN), [Indexes](https://www.postgresql.org/docs/current/indexes.html) |
+| `disk_spill` | PostgreSQL: [work_mem](https://www.postgresql.org/docs/current/runtime-config-resource.html) |
+| `filter_discard` | PostgreSQL: [Using EXPLAIN](https://wiki.postgresql.org/wiki/Using_EXPLAIN) (Rows Removed by Filter) |
+| `nested_loop_blowup` | PostgreSQL: planner join methods; Leis et al. (2015) |
+| `index_only_heap_fetches` | PostgreSQL: [Index-Only Scans and Covering Indexes](https://www.postgresql.org/docs/current/indexes-index-only-scans.html) |
+| `lossy_bitmap` | PostgreSQL: [work_mem](https://www.postgresql.org/docs/current/runtime-config-resource.html) (lossy bitmap recheck) |
+| `jit_overhead` | PostgreSQL: [Just-in-Time Compilation](https://www.postgresql.org/docs/current/jit.html) (`jit_above_cost`) |
+
+Primary references:
 
 - [PostgreSQL documentation: EXPLAIN](https://www.postgresql.org/docs/current/sql-explain.html)
-- [PostgreSQL wiki: Using EXPLAIN](https://wiki.postgresql.org/wiki/Using_EXPLAIN)
+  and the [Using EXPLAIN](https://wiki.postgresql.org/wiki/Using_EXPLAIN) wiki page.
 - V. Leis, A. Gubichev, A. Mirchev, P. Boncz, A. Kemper, T. Neumann, "How Good
   Are Query Optimizers, Really?", Proceedings of the VLDB Endowment 9(3), 2015 -
   the study of cardinality mis-estimation behind the Join Order Benchmark, which
@@ -277,8 +315,8 @@ and academic sources, written in our own words:
 
 Plan analysis has no single numeric ground truth the way a closed-form formula
 does, so the claim here is deliberately narrow: the parsing and arithmetic are
-correct against the documented format, and each heuristic cites the behaviour it
-relies on.
+correct against the documented format, each finding cites the behaviour it relies
+on, and the suggestions are pointers, not guarantees.
 
 ## License
 

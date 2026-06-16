@@ -52,6 +52,7 @@ class Finding:
     node: str | None = None         # e.g. "Seq Scan on orders"
     path: tuple[int, ...] | None = None
     suggestion: str | None = None
+    reference: str | None = None    # the documented behaviour the rule relies on
 
     @property
     def rank(self) -> int:
@@ -72,6 +73,7 @@ class Finding:
             "detail": self.detail, "node": self.node,
             "path": list(self.path) if self.path else None,
             "suggestion": self.suggestion,
+            "reference": self.reference,
         }
 
 

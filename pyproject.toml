@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dataxplan"
-version = "0.1.0"
+version = "0.1.1"
 description = "Read PostgreSQL EXPLAIN plans locally: parse the plan, compute self time and estimation error, flag documented problems, compare plans, and guard them in CI. No database connection, deterministic."
 readme = "README.md"
 license = { text = "MIT" }

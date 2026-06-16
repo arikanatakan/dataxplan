@@ -4,6 +4,19 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project uses
 [semantic versioning](https://semver.org/).
 
+## [0.1.1] - 2026-06-17
+
+### Added
+
+- Each finding now carries a `reference` to the documented PostgreSQL behaviour
+  it relies on (and Leis et al. 2015 for the estimation rules), surfaced in
+  `to_dict()`.
+
+### Documentation
+
+- A Methodology section with the metric formulas (self time, estimation error,
+  spill detection) and a per-finding source table in the README.
+
 ## [0.1.0] - 2026-06-17
 
 First release.

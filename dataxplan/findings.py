@@ -1,10 +1,21 @@
 """Heuristic rules that turn metrics into findings.
 
-Each rule encodes a documented PostgreSQL behaviour (see the references in the
-README). A finding is an observation with an explanation and, where reasonable,
-a suggestion; it is never a promise that a change will help. When catalog
-context is supplied the messages are sharpened, but every rule works from the
-plan alone.
+Each rule encodes a documented PostgreSQL behaviour and carries a ``reference``
+to it (also tabulated in the README). A finding is an observation with an
+explanation and, where reasonable, a suggestion; it is never a promise that a
+change will help. When catalog context is supplied the messages are sharpened,
+but every rule works from the plan alone.
+
+Source basis (PostgreSQL manual unless noted):
+  estimate_off            planner statistics, ANALYZE, CREATE STATISTICS;
+                          Leis et al. (2015), the Join Order Benchmark study
+  seq_scan_hot            Using EXPLAIN; the Indexes chapter
+  disk_spill              work_mem (resource consumption)
+  filter_discard          Using EXPLAIN (Rows Removed by Filter)
+  nested_loop_blowup      planner join methods; Leis et al. (2015)
+  index_only_heap_fetches Index-Only Scans and Covering Indexes
+  lossy_bitmap            work_mem (lossy bitmap recheck)
+  jit_overhead            Just-in-Time Compilation (jit_above_cost)
 """
 
 from __future__ import annotations
@@ -23,6 +34,16 @@ DEFAULT_THRESHOLDS = {
     "heap_fetch_ratio": 0.10,         # heap fetches vs rows
     "jit_pct": 0.25,                  # JIT time vs execution time
 }
+
+# The documented behaviour each rule relies on (see the README references).
+_REF_STATS = ("PostgreSQL: planner statistics, ANALYZE, CREATE STATISTICS; "
+              "Leis et al. (2015)")
+_REF_EXPLAIN = "PostgreSQL: Using EXPLAIN; the Indexes chapter"
+_REF_FILTER = "PostgreSQL: Using EXPLAIN (Rows Removed by Filter)"
+_REF_WORKMEM = "PostgreSQL: work_mem (resource consumption)"
+_REF_JOINS = "PostgreSQL: planner join methods; Leis et al. (2015)"
+_REF_INDEX_ONLY = "PostgreSQL: Index-Only Scans and Covering Indexes"
+_REF_JIT = "PostgreSQL: Just-in-Time Compilation (jit_above_cost)"
 
 
 def _pct(value: float | None) -> str:
@@ -57,7 +78,8 @@ def run_findings(plan: Plan, metrics: list[NodeMetrics],
                 if ctx_table is not None and not ctx_table.analyzed:
                     sug = "statistics look stale; run ANALYZE on " + m.relation
                 found.append(Finding("estimate_off", sev, "Row estimate is far off",
-                                     detail, m.label, m.path, sug))
+                                     detail, m.label, m.path, sug,
+                                     reference=_REF_STATS))
 
         # 2. Sequential scan taking a large share of the time.
         if (m.node_type == "Seq Scan" and m.relation
@@ -73,7 +95,8 @@ def run_findings(plan: Plan, metrics: list[NodeMetrics],
                 sug += (f" (existing indexes cover: "
                         f"{', '.join(ctx_table.indexed_columns)})")
             found.append(Finding("seq_scan_hot", HIGH, "Hot sequential scan",
-                                 detail, m.label, m.path, sug))
+                                 detail, m.label, m.path, sug,
+                                 reference=_REF_EXPLAIN))
 
         # 3. A sort or hash spilled to disk.
         if m.spilled:
@@ -89,7 +112,7 @@ def run_findings(plan: Plan, metrics: list[NodeMetrics],
                 "disk_spill", MEDIUM, "Operation spilled to disk",
                 what + mem, m.label, m.path,
                 "raise work_mem for this query, or reduce the rows being "
-                "sorted or hashed"))
+                "sorted or hashed", reference=_REF_WORKMEM))
 
         # 4. Reading many rows and discarding most (non-sargable / missing index).
         removed = m.rows_removed_by_filter
@@ -102,7 +125,7 @@ def run_findings(plan: Plan, metrics: list[NodeMetrics],
                 "filter_discard", MEDIUM, "Filter discards most rows read", detail,
                 m.label, m.path,
                 "the predicate is not selective via the current access path; an "
-                "index on the filtered column may help"))
+                "index on the filtered column may help", reference=_REF_FILTER))
 
         # 5. Nested loop driving its inner side many times.
         if m.node_type == "Nested Loop" and node.children:
@@ -113,7 +136,7 @@ def run_findings(plan: Plan, metrics: list[NodeMetrics],
                     f"the inner side executed {inner_loops:,.0f} times", m.label,
                     m.path,
                     "usually an under-estimate upstream; check the row estimates, a "
-                    "hash or merge join may be cheaper"))
+                    "hash or merge join may be cheaper", reference=_REF_JOINS))
 
         # 6. Index-only scan still hitting the heap (visibility map not set).
         if (m.node_type == "Index Only Scan" and m.heap_fetches
@@ -124,7 +147,8 @@ def run_findings(plan: Plan, metrics: list[NodeMetrics],
                 "Index-only scan with many heap fetches",
                 f"{m.heap_fetches:,.0f} heap fetches for {m.actual_rows:,.0f} rows",
                 m.label, m.path,
-                "VACUUM the table so the visibility map lets the scan skip the heap"))
+                "VACUUM the table so the visibility map lets the scan skip the heap",
+                reference=_REF_INDEX_ONLY))
 
         # 7. Lossy bitmap heap scan (work_mem too small for the bitmap).
         recheck = node.raw.get("Rows Removed by Index Recheck")
@@ -133,7 +157,7 @@ def run_findings(plan: Plan, metrics: list[NodeMetrics],
                 "lossy_bitmap", LOW, "Bitmap heap scan went lossy",
                 f"{float(recheck):,.0f} rows rechecked after a lossy bitmap",
                 m.label, m.path,
-                "raise work_mem so the bitmap stays exact"))
+                "raise work_mem so the bitmap stays exact", reference=_REF_WORKMEM))
 
     # 8. JIT overhead on a short query.
     jit = plan.jit
@@ -145,7 +169,7 @@ def run_findings(plan: Plan, metrics: list[NodeMetrics],
                 f"JIT took {total:,.1f} ms of {plan.execution_time:,.1f} ms total",
                 None, None,
                 "for short, frequent queries consider raising jit_above_cost or "
-                "turning JIT off"))
+                "turning JIT off", reference=_REF_JIT))
 
     if not found:
         found.append(Finding("clean", INFO, "No issues flagged",
