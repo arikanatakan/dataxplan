@@ -1,0 +1,84 @@
+[
+  {
+    "Plan": {
+      "Node Type": "Aggregate",
+      "Strategy": "Hashed",
+      "Group Key": ["p.station_id"],
+      "Startup Cost": 2400000.0,
+      "Total Cost": 2400050.0,
+      "Plan Rows": 50,
+      "Plan Width": 16,
+      "Actual Startup Time": 2600.0,
+      "Actual Total Time": 2600.0,
+      "Actual Rows": 50,
+      "Actual Loops": 1,
+      "Plans": [
+        {
+          "Node Type": "Hash Join",
+          "Join Type": "Inner",
+          "Hash Cond": "(m.part_id = p.part_id)",
+          "Startup Cost": 50.0,
+          "Total Cost": 2300000.0,
+          "Plan Rows": 300,
+          "Plan Width": 12,
+          "Actual Startup Time": 60.0,
+          "Actual Total Time": 2580.0,
+          "Actual Rows": 288000,
+          "Actual Loops": 1,
+          "Plans": [
+            {
+              "Node Type": "Seq Scan",
+              "Relation Name": "measurements",
+              "Alias": "m",
+              "Startup Cost": 0.0,
+              "Total Cost": 2000000.0,
+              "Plan Rows": 48000000,
+              "Plan Width": 8,
+              "Actual Startup Time": 0.03,
+              "Actual Total Time": 2200.0,
+              "Actual Rows": 48000000,
+              "Actual Loops": 1,
+              "Shared Hit Blocks": 200000,
+              "Shared Read Blocks": 1500000
+            },
+            {
+              "Node Type": "Hash",
+              "Startup Cost": 40.0,
+              "Total Cost": 40.0,
+              "Plan Rows": 6000,
+              "Plan Width": 4,
+              "Actual Startup Time": 60.0,
+              "Actual Total Time": 60.0,
+              "Actual Rows": 6000,
+              "Actual Loops": 1,
+              "Hash Buckets": 8192,
+              "Hash Batches": 1,
+              "Plans": [
+                {
+                  "Node Type": "Seq Scan",
+                  "Relation Name": "parts",
+                  "Alias": "p",
+                  "Startup Cost": 0.0,
+                  "Total Cost": 35.0,
+                  "Plan Rows": 6000,
+                  "Plan Width": 4,
+                  "Actual Startup Time": 0.02,
+                  "Actual Total Time": 55.0,
+                  "Actual Rows": 6000,
+                  "Actual Loops": 1,
+                  "Filter": "(response = 1)",
+                  "Rows Removed by Filter": 1194000,
+                  "Shared Hit Blocks": 5000,
+                  "Shared Read Blocks": 7000
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "Planning Time": 0.5,
+    "Execution Time": 2601.0,
+    "Triggers": []
+  }
+]

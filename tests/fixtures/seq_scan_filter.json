@@ -1,0 +1,24 @@
+[
+  {
+    "Plan": {
+      "Node Type": "Seq Scan",
+      "Relation Name": "orders",
+      "Alias": "orders",
+      "Startup Cost": 0.0,
+      "Total Cost": 35811.0,
+      "Plan Rows": 5,
+      "Plan Width": 244,
+      "Actual Startup Time": 0.03,
+      "Actual Total Time": 900.0,
+      "Actual Rows": 5,
+      "Actual Loops": 1,
+      "Filter": "(status = 'X'::text)",
+      "Rows Removed by Filter": 10000000,
+      "Shared Hit Blocks": 1000,
+      "Shared Read Blocks": 120000
+    },
+    "Planning Time": 0.4,
+    "Execution Time": 905.0,
+    "Triggers": []
+  }
+]

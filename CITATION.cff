@@ -1,0 +1,24 @@
+cff-version: 1.2.0
+message: "If you use dataxplan in your work, please cite it as below."
+title: "dataxplan: read PostgreSQL EXPLAIN plans, locally"
+abstract: >-
+  Parse PostgreSQL EXPLAIN (FORMAT JSON) output, compute self time and
+  estimation error, flag documented problems, compare plans and guard them in
+  CI. No database connection and deterministic.
+type: software
+authors:
+  - family-names: Arikan
+    given-names: Atakan
+version: 0.1.0
+date-released: 2026-06-17
+license: MIT
+repository-code: "https://github.com/arikanatakan/dataxplan"
+url: "https://github.com/arikanatakan/dataxplan"
+keywords:
+  - postgresql
+  - explain
+  - query-plan
+  - performance
+  - query-optimization
+  - database
+  - sql

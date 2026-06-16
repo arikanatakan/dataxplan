@@ -1,0 +1,53 @@
+[
+  {
+    "Plan": {
+      "Node Type": "Nested Loop",
+      "Join Type": "Inner",
+      "Startup Cost": 1.0,
+      "Total Cost": 52000.0,
+      "Plan Rows": 2,
+      "Plan Width": 80,
+      "Actual Startup Time": 0.12,
+      "Actual Total Time": 3200.0,
+      "Actual Rows": 480000,
+      "Actual Loops": 1,
+      "Plans": [
+        {
+          "Node Type": "Seq Scan",
+          "Relation Name": "movie_keyword",
+          "Alias": "mk",
+          "Startup Cost": 0.0,
+          "Total Cost": 9000.0,
+          "Plan Rows": 2,
+          "Plan Width": 8,
+          "Actual Startup Time": 0.05,
+          "Actual Total Time": 250.0,
+          "Actual Rows": 480000,
+          "Actual Loops": 1,
+          "Filter": "(keyword_id = 8200)",
+          "Rows Removed by Filter": 5000000,
+          "Shared Hit Blocks": 1200,
+          "Shared Read Blocks": 26000
+        },
+        {
+          "Node Type": "Index Scan",
+          "Relation Name": "title",
+          "Alias": "t",
+          "Index Name": "title_pkey",
+          "Startup Cost": 0.4,
+          "Total Cost": 8.0,
+          "Plan Rows": 1,
+          "Plan Width": 80,
+          "Actual Startup Time": 0.004,
+          "Actual Total Time": 0.005,
+          "Actual Rows": 1,
+          "Actual Loops": 480000,
+          "Index Cond": "(t.id = mk.movie_id)"
+        }
+      ]
+    },
+    "Planning Time": 1.2,
+    "Execution Time": 3260.0,
+    "Triggers": []
+  }
+]

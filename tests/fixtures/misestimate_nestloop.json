@@ -1,0 +1,44 @@
+[
+  {
+    "Plan": {
+      "Node Type": "Nested Loop",
+      "Startup Cost": 0.5,
+      "Total Cost": 9999.0,
+      "Plan Rows": 5,
+      "Plan Width": 40,
+      "Actual Startup Time": 0.05,
+      "Actual Total Time": 1500.0,
+      "Actual Rows": 500000,
+      "Actual Loops": 1,
+      "Plans": [
+        {
+          "Node Type": "Index Scan",
+          "Relation Name": "a",
+          "Index Name": "a_pkey",
+          "Plan Rows": 5,
+          "Plan Width": 8,
+          "Total Cost": 100.0,
+          "Actual Startup Time": 0.02,
+          "Actual Total Time": 50.0,
+          "Actual Rows": 500000,
+          "Actual Loops": 1
+        },
+        {
+          "Node Type": "Index Scan",
+          "Relation Name": "b",
+          "Index Name": "b_idx",
+          "Plan Rows": 1,
+          "Plan Width": 8,
+          "Total Cost": 2.0,
+          "Actual Startup Time": 0.001,
+          "Actual Total Time": 0.002,
+          "Actual Rows": 1,
+          "Actual Loops": 500000
+        }
+      ]
+    },
+    "Planning Time": 0.3,
+    "Execution Time": 1505.0,
+    "Triggers": []
+  }
+]

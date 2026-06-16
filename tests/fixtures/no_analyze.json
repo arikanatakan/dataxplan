@@ -1,0 +1,12 @@
+[
+  {
+    "Plan": {
+      "Node Type": "Seq Scan",
+      "Relation Name": "orders",
+      "Plan Rows": 100,
+      "Plan Width": 244,
+      "Startup Cost": 0.0,
+      "Total Cost": 35811.0
+    }
+  }
+]

@@ -1,0 +1,53 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dataxplan"
+version = "0.1.0"
+description = "Read PostgreSQL EXPLAIN plans locally: parse the plan, compute self time and estimation error, flag documented problems, compare plans, and guard them in CI. No database connection, deterministic."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Atakan Arikan" }]
+requires-python = ">=3.10"
+dependencies = []
+keywords = [
+    "postgresql", "postgres", "explain", "query-plan", "performance",
+    "query-optimization", "database", "sql", "explain-analyze", "dba",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Database",
+    "Topic :: Software Development :: Quality Assurance",
+]
+
+[project.scripts]
+dataxplan = "dataxplan.cli:main"
+
+[project.optional-dependencies]
+viz = ["matplotlib>=3.5"]
+dev = ["pytest>=7", "ruff", "build", "matplotlib>=3.5"]
+
+[project.urls]
+Homepage = "https://github.com/arikanatakan/dataxplan"
+Repository = "https://github.com/arikanatakan/dataxplan"
+Issues = "https://github.com/arikanatakan/dataxplan/issues"
+
+[tool.setuptools.packages.find]
+include = ["dataxplan*"]
+
+[tool.setuptools.package-data]
+dataxplan = ["py.typed"]
+
+[tool.ruff]
+line-length = 88
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
