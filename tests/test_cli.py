@@ -40,6 +40,19 @@ def test_cli_compare(load, capsys, tmp_path):
     assert "IMPROVED" in capsys.readouterr().out
 
 
+def test_cli_accepts_text_format(capsys, tmp_path):
+    text = ("Seq Scan on orders  (cost=0.00..35811.00 rows=5 width=244) "
+            "(actual time=0.030..900.000 rows=5 loops=1)\n"
+            "  Rows Removed by Filter: 10000000\n"
+            "Execution Time: 905.000 ms\n")
+    path = tmp_path / "p.txt"
+    path.write_text(text)
+    rc = main([str(path)])
+    out = capsys.readouterr().out
+    assert rc == 0
+    assert "Hot sequential scan" in out
+
+
 def test_cli_bad_input(capsys, tmp_path):
     path = tmp_path / "bad.json"
     path.write_text("{not json")

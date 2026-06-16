@@ -163,7 +163,7 @@ runs the query, so use `analyze=False` for a plan-only estimate.
 
 | Area | What you get |
 | --- | --- |
-| Parse | `parse` -> a typed `Plan` / `PlanNode` tree from EXPLAIN (FORMAT JSON) |
+| Parse | `parse` -> a typed `Plan` / `PlanNode` tree from EXPLAIN JSON, text, YAML or XML (auto-detected) |
 | Metrics | self (exclusive) time, % of total, estimation error, disk spills, buffers |
 | Findings | hot sequential scans, large row mis-estimates, disk spills, filter discards, nested-loop blow-ups, index-only heap fetches, lossy bitmaps, JIT overhead |
 | Report | `summary`, `to_dict`, and an assertion API (`has_seq_scan_on`, `max_estimation_error`, `spilled_to_disk`, `ok`) for CI |
@@ -271,8 +271,10 @@ instead of a full scan.
 
 ## Limitations and Constraints
 
-- **PostgreSQL only.** It parses PostgreSQL `EXPLAIN (FORMAT JSON)`; other engines
-  are not supported yet, and the text format is not parsed (use `FORMAT JSON`).
+- **PostgreSQL only.** It parses PostgreSQL `EXPLAIN` output (JSON, text, YAML or
+  XML, auto-detected); other engines are not supported yet. JSON, YAML and XML are
+  exact; the text format is parsed best-effort, so prefer `FORMAT JSON` when you
+  can.
 - **ANALYZE is needed for timing.** Without `ANALYZE` there are no actual times or
   row counts, so self time, estimation error and the timing-based findings are
   unavailable; the plan still parses and its structure is reported.
@@ -293,8 +295,8 @@ instead of a full scan.
 dataxplan analyses the **plan you give it**. By default it does not connect to a
 database, run your queries, or read your schema, so a finding is a **documented
 heuristic, not a guarantee**, and the suggestions are based on the plan alone. It
-does not rewrite SQL or invent a cost model. It targets PostgreSQL
-`FORMAT JSON` output (MySQL may follow).
+does not rewrite SQL or invent a cost model. It targets PostgreSQL `EXPLAIN`
+output (JSON, text, YAML or XML; MySQL may follow).
 
 ## How the headline metrics work
 

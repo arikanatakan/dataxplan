@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "dataxplan"
-version = "0.1.1"
+version = "0.2.0"
 description = "Read PostgreSQL EXPLAIN plans locally: parse the plan, compute self time and estimation error, flag documented problems, compare plans, and guard them in CI. No database connection, deterministic."
 readme = "README.md"
 license = { text = "MIT" }
@@ -33,7 +33,8 @@ dataxplan = "dataxplan.cli:main"
 
 [project.optional-dependencies]
 viz = ["matplotlib>=3.5"]
-dev = ["pytest>=7", "ruff", "build", "matplotlib>=3.5"]
+yaml = ["pyyaml>=5"]
+dev = ["pytest>=7", "ruff", "build", "matplotlib>=3.5", "pyyaml>=5"]
 
 [project.urls]
 Homepage = "https://github.com/arikanatakan/dataxplan"

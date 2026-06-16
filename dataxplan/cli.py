@@ -41,14 +41,14 @@ def main(argv=None) -> int:
     args = parser.parse_args(argv)
 
     try:
-        plan = json.loads(_read(args.plan))
+        plan = _read(args.plan)            # raw string in any EXPLAIN format
         if args.compare:
-            result = compare(plan, json.loads(_read(args.compare)))
+            result = compare(plan, _read(args.compare))
             print(json.dumps(result.to_dict(), indent=2, default=str)
                   if args.json else result.summary())
             return 0
         report = analyze(plan)
-    except (ValueError, TypeError, OSError, json.JSONDecodeError) as exc:
+    except (ValueError, TypeError, OSError) as exc:
         print(f"dataxplan: {exc}", file=sys.stderr)
         return 2
 
