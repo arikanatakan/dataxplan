@@ -151,6 +151,10 @@ flags `disk_spill` (an external-merge sort) over a hot sequential scan
 
 ![dataxplan self-time chart for the NYC taxi example](assets/example_nyc.png)
 
+The red bar is the sequential scan feeding the sort, and the sort then overflowed
+memory to disk. **Action:** index the filter so the scan shrinks, or raise
+`work_mem` (or pre-aggregate) so the sort stays in memory.
+
 ### TPC-H lineitem - a hot scan discarding most rows
 
 [TPC-H](https://www.tpc.org/tpch/) is the standard decision-support benchmark,
@@ -158,6 +162,10 @@ scalable to hundreds of gigabytes. A selective predicate on `l_quantity` flags
 `seq_scan_hot` and `filter_discard` (59 million rows read, 2 million kept).
 
 ![dataxplan self-time chart for the TPC-H example](assets/example_tpch.png)
+
+Almost all the time is one scan that reads 59 million rows to keep 2 million.
+**Action:** add an index on the filtered column so the predicate is served by the
+index instead of a full scan.
 
 ### IMDB / Join Order Benchmark - a row mis-estimate
 
@@ -168,6 +176,10 @@ dataxplan flags `estimate_off` (2 rows estimated, 480,000 actual) and
 
 ![dataxplan self-time chart for the Join Order Benchmark example](assets/example_job.png)
 
+The estimate was 2 rows but the join produced 480,000, so the planner chose a
+nested loop that ran 480,000 times (the inner scan is the red bar). **Action:**
+run `ANALYZE` and add extended statistics so a hash or merge join is chosen.
+
 ### Bosch Production Line Performance (manufacturing) - a hash join mis-estimate
 
 The [Bosch Production Line Performance](https://www.kaggle.com/competitions/bosch-production-line-performance)
@@ -177,6 +189,10 @@ discarding most rows (`filter_discard`).
 
 ![dataxplan self-time chart for the Bosch example](assets/example_bosch.png)
 
+The 48-million-row `measurements` scan is the bottleneck (red) and the join
+estimate is 960x too low. **Action:** index or partition `measurements` by part
+or station, and refresh statistics so the join is planned correctly.
+
 ### SECOM (semiconductor) - an index-only scan hitting the heap
 
 [SECOM](https://archive.ics.uci.edu/dataset/179/secom) (UCI) is sensor data from
@@ -184,6 +200,10 @@ a semiconductor line. dataxplan flags `index_only_heap_fetches` (9 million heap
 fetches, so the table needs a VACUUM) and `estimate_off`.
 
 ![dataxplan self-time chart for the SECOM example](assets/example_secom.png)
+
+The index-only scan should skip the table, but it made 9 million heap fetches
+because the visibility map is stale. **Action:** `VACUUM` the table so the scan
+skips the heap, and `ANALYZE` to fix the row estimate.
 
 ### Mercedes-Benz manufacturing (automotive) - a lossy bitmap scan
 
@@ -193,6 +213,10 @@ million rows rechecked, so work_mem is too small) and `estimate_off`.
 
 ![dataxplan self-time chart for the Mercedes-Benz example](assets/example_mercedes.png)
 
+The bitmap did not fit in `work_mem`, so it went lossy and rechecked 6 million
+rows. **Action:** raise `work_mem` so the bitmap stays exact, and refresh
+statistics for the estimate.
+
 ### Garment factory (textile) - a hot scan discarding most rows
 
 The [Productivity Prediction of Garment Employees](https://archive.ics.uci.edu/dataset/597/productivity+prediction+of+garment+employees)
@@ -200,6 +224,10 @@ set (UCI) is garment (textile) manufacturing data. dataxplan flags `seq_scan_hot
 and `filter_discard` on the production log.
 
 ![dataxplan self-time chart for the garment factory example](assets/example_garments.png)
+
+The `production_log` scan reads 12 million rows to keep 500,000 (red).
+**Action:** add an index on the `department` column so the filter uses the index
+instead of a full scan.
 
 ## What is out of scope
 
