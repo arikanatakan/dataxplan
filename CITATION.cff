@@ -9,7 +9,7 @@ type: software
 authors:
   - family-names: Arikan
     given-names: Atakan
-version: 0.1.0
+version: 0.1.2
 date-released: 2026-06-17
 license: MIT
 repository-code: "https://github.com/arikanatakan/dataxplan"
