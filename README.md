@@ -17,15 +17,7 @@ the rest locally.
 It turns a plan into a deterministic read. Here the Bosch manufacturing example
 (`examples/`): a hash join over a 48-million-row scan of the production-line
 measurements, estimated at 300 rows but producing 288,000 ([Bosch Production Line
-Performance](https://www.kaggle.com/competitions/bosch-production-line-performance)).
-
-![dataxplan output for the Bosch example: a horizontal bar chart of self time per plan node, with the 48-million-row sequential scan of measurements dominating in a warning colour and the mis-estimated hash join also flagged](assets/example_bosch.png)
-
-Each bar is a node's self (exclusive) time; the two bars in the warning colour
-are the high-severity findings (the 48-million-row `measurements` scan and the
-960x under-estimated hash join), so those are where to look first.
-
-The same plan as a summary:
+Performance](https://www.kaggle.com/competitions/bosch-production-line-performance)):
 
 ```text
 dataxplan
@@ -142,16 +134,72 @@ runs the query, so use `analyze=False` for a plan-only estimate.
 
 ## Examples
 
-Seven plans from public datasets and benchmarks are in [`examples/`](examples/),
-including manufacturing cases across automotive (Mercedes-Benz), textile (a
-garment factory) and semiconductor (SECOM), alongside the Bosch production line,
-the Join Order Benchmark, the NYC TLC taxi trips and TPC-H. Each shows a
-different problem (a hot scan, a row mis-estimate, a disk spill, a lossy bitmap,
-an index-only scan hitting the heap). For instance:
+Seven plans from public datasets and benchmarks (in [`examples/`](examples/)),
+ordered here from the largest data set to the smallest. Each chart shows self
+time per node, with the high-severity findings in a warning colour. The benchmark
+and NYC sets are large in their own right; the semiconductor, automotive and
+textile sets are smaller research samples of domains that run at production
+scale, so those plans model a production-size query. Sizes and times are
+illustrative.
 
-```bash
-dataxplan examples/bosch_production_hash_join.json
-```
+### NYC TLC Yellow Taxi - a sort that spills to disk
+
+The [NYC TLC trip records](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page)
+are a public, multi-billion-row data set. Ordering long trips by fare, dataxplan
+flags `disk_spill` (an external-merge sort) over a hot sequential scan
+(`seq_scan_hot`).
+
+![dataxplan self-time chart for the NYC taxi example](assets/example_nyc.png)
+
+### TPC-H lineitem - a hot scan discarding most rows
+
+[TPC-H](https://www.tpc.org/tpch/) is the standard decision-support benchmark,
+scalable to hundreds of gigabytes. A selective predicate on `l_quantity` flags
+`seq_scan_hot` and `filter_discard` (59 million rows read, 2 million kept).
+
+![dataxplan self-time chart for the TPC-H example](assets/example_tpch.png)
+
+### IMDB / Join Order Benchmark - a row mis-estimate
+
+The [Join Order Benchmark](https://github.com/gregrahn/join-order-benchmark)
+(Leis et al., VLDB 2015) is the standard cardinality-estimation benchmark.
+dataxplan flags `estimate_off` (2 rows estimated, 480,000 actual) and
+`nested_loop_blowup`.
+
+![dataxplan self-time chart for the Join Order Benchmark example](assets/example_job.png)
+
+### Bosch Production Line Performance (manufacturing) - a hash join mis-estimate
+
+The [Bosch Production Line Performance](https://www.kaggle.com/competitions/bosch-production-line-performance)
+set is large public manufacturing data. dataxplan flags a hot 48-million-row scan
+(`seq_scan_hot`), a 960x join mis-estimate (`estimate_off`) and a filter
+discarding most rows (`filter_discard`).
+
+![dataxplan self-time chart for the Bosch example](assets/example_bosch.png)
+
+### SECOM (semiconductor) - an index-only scan hitting the heap
+
+[SECOM](https://archive.ics.uci.edu/dataset/179/secom) (UCI) is sensor data from
+a semiconductor line. dataxplan flags `index_only_heap_fetches` (9 million heap
+fetches, so the table needs a VACUUM) and `estimate_off`.
+
+![dataxplan self-time chart for the SECOM example](assets/example_secom.png)
+
+### Mercedes-Benz manufacturing (automotive) - a lossy bitmap scan
+
+The [Mercedes-Benz Greener Manufacturing](https://www.kaggle.com/competitions/mercedes-benz-greener-manufacturing)
+set (Kaggle) is automotive test-bench data. dataxplan flags `lossy_bitmap` (6
+million rows rechecked, so work_mem is too small) and `estimate_off`.
+
+![dataxplan self-time chart for the Mercedes-Benz example](assets/example_mercedes.png)
+
+### Garment factory (textile) - a hot scan discarding most rows
+
+The [Productivity Prediction of Garment Employees](https://archive.ics.uci.edu/dataset/597/productivity+prediction+of+garment+employees)
+set (UCI) is garment (textile) manufacturing data. dataxplan flags `seq_scan_hot`
+and `filter_discard` on the production log.
+
+![dataxplan self-time chart for the garment factory example](assets/example_garments.png)
 
 ## What is out of scope
 

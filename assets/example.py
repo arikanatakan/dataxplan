@@ -1,4 +1,4 @@
-"""Render the README example chart: the Bosch plan's self time per node.
+"""Render the README example charts: self time per node for each example plan.
 
 Run:  python assets/example.py
 """
@@ -11,10 +11,23 @@ matplotlib.use("Agg")
 
 import dataxplan
 
-plan = json.loads(
-    (pathlib.Path("examples") / "bosch_production_hash_join.json").read_text())
-report = dataxplan.analyze(plan)
-fig = dataxplan.plan_tree_chart(report)
-fig.savefig("assets/example_bosch.png", dpi=140, bbox_inches="tight",
-            facecolor="white")
-print("wrote assets/example_bosch.png")
+EXAMPLES = pathlib.Path("examples")
+ASSETS = pathlib.Path("assets")
+
+# example plan stem -> output image name, ordered largest scope to smallest
+CHARTS = {
+    "nyc_taxi_sort_spill": "example_nyc",
+    "tpch_lineitem_filter": "example_tpch",
+    "job_imdb_misestimate": "example_job",
+    "bosch_production_hash_join": "example_bosch",
+    "secom_semiconductor_index_only": "example_secom",
+    "mercedes_automotive_lossy_bitmap": "example_mercedes",
+    "garments_textile_seq_scan": "example_garments",
+}
+
+for stem, out in CHARTS.items():
+    report = dataxplan.analyze(json.loads((EXAMPLES / f"{stem}.json").read_text()))
+    fig = dataxplan.plan_tree_chart(report)
+    fig.savefig(ASSETS / f"{out}.png", dpi=140, bbox_inches="tight",
+                facecolor="white")
+    print("wrote", out)
