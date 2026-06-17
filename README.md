@@ -349,6 +349,12 @@ does, so the claim here is deliberately narrow: the parsing and arithmetic are
 correct against the documented format, each finding cites the behaviour it relies
 on, and the suggestions are pointers, not guarantees.
 
+## Related
+
+[dataxplan-mcp](https://github.com/arikanatakan/dataxplan-mcp) exposes this
+analysis to AI agents over the Model Context Protocol, so an agent can read a
+plan it captured and act on the findings.
+
 ## License
 
 MIT. Written and maintained by [Atakan Arikan](https://github.com/arikanatakan),
