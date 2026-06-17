@@ -1,7 +1,7 @@
 # dataxplan
 
 [![CI](https://github.com/arikanatakan/dataxplan/actions/workflows/ci.yml/badge.svg)](https://github.com/arikanatakan/dataxplan/actions/workflows/ci.yml)
-[![PyPI](https://img.shields.io/pypi/v/dataxplan?v=3)](https://pypi.org/project/dataxplan/)
+[![PyPI](https://img.shields.io/pypi/v/dataxplan?v=4)](https://pypi.org/project/dataxplan/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 Read PostgreSQL `EXPLAIN` plans from Python: parse the plan, compute the numbers
