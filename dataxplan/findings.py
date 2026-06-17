@@ -33,6 +33,7 @@ DEFAULT_THRESHOLDS = {
     "nested_loop_loops": 1000.0,      # inner executions
     "heap_fetch_ratio": 0.10,         # heap fetches vs rows
     "jit_pct": 0.25,                  # JIT time vs execution time
+    "min_time_ms": 50.0,              # ignore time-based findings below this
 }
 
 # The documented behaviour each rule relies on (see the README references).
@@ -76,14 +77,16 @@ def run_findings(plan: Plan, metrics: list[NodeMetrics],
                 sug = ("run ANALYZE on the table; if the columns are correlated "
                        "consider extended statistics (CREATE STATISTICS)")
                 if ctx_table is not None and not ctx_table.analyzed:
-                    sug = "statistics look stale; run ANALYZE on " + m.relation
+                    sug = ("statistics look stale; run ANALYZE on "
+                           + (m.relation or "the table"))
                 found.append(Finding("estimate_off", sev, "Row estimate is far off",
                                      detail, m.label, m.path, sug,
                                      reference=_REF_STATS))
 
-        # 2. Sequential scan taking a large share of the time.
+        # 2. Sequential scan taking a large share of a non-trivial query.
         if (m.node_type == "Seq Scan" and m.relation
-                and (m.pct_self or 0) >= t["seq_scan_pct"]):
+                and (m.pct_self or 0) >= t["seq_scan_pct"]
+                and (m.self_time or 0) >= t["min_time_ms"]):
             size = (f" ({ctx_table.row_count:,.0f} rows)"
                     if ctx_table and ctx_table.row_count else "")
             detail = (f"sequential scan{size} is {_pct(m.pct_self)} of execution "
@@ -127,10 +130,12 @@ def run_findings(plan: Plan, metrics: list[NodeMetrics],
                 "the predicate is not selective via the current access path; an "
                 "index on the filtered column may help", reference=_REF_FILTER))
 
-        # 5. Nested loop driving its inner side many times.
+        # 5. Nested loop driving its inner side many times, and paying for it.
         if m.node_type == "Nested Loop" and node.children:
             inner_loops = max((c.actual_loops for c in node.children), default=0)
-            if inner_loops >= t["nested_loop_loops"]:
+            inner_cost = max((c.inclusive_time or 0.0 for c in node.children),
+                             default=0.0)
+            if inner_loops >= t["nested_loop_loops"] and inner_cost >= t["min_time_ms"]:
                 found.append(Finding(
                     "nested_loop_blowup", MEDIUM, "Nested loop with many iterations",
                     f"the inner side executed {inner_loops:,.0f} times", m.label,

@@ -65,6 +65,19 @@ Execution Time: 1505.000 ms
 """
 
 
+# A parallel plan in the text format: the worker scan must normalise to "Seq Scan".
+PARALLEL_TEXT = """\
+Gather  (cost=1000.00..50000.00 rows=4000000 width=120) (actual time=0.500..3000.000 rows=4000000 loops=1)
+  Workers Planned: 2
+  Workers Launched: 2
+  ->  Parallel Seq Scan on yellow_tripdata  (cost=0.00..40000.00 rows=1666667 width=120) (actual time=0.020..1500.000 rows=1333333 loops=3)
+        Filter: (trip_distance > '50'::numeric)
+        Rows Removed by Filter: 15000000
+Planning Time: 0.300 ms
+Execution Time: 3100.000 ms
+"""
+
+
 def _ids(report):
     return {f.id for f in report.findings}
 
@@ -107,6 +120,15 @@ def test_text_tree_and_self_time():
     assert m["Index Scan on b"].self_time == pytest.approx(1000.0)
     ids = _ids(dataxplan.analyze(NESTED_TEXT))
     assert "estimate_off" in ids and "nested_loop_blowup" in ids
+
+
+def test_parallel_text_is_normalised():
+    report = dataxplan.analyze(PARALLEL_TEXT)
+    # "Parallel Seq Scan" reads as "Seq Scan", as the JSON format reports it
+    assert report.has_seq_scan_on("yellow_tripdata")
+    assert "seq_scan_hot" in _ids(report)
+    assert report.rollup["parallel"] is True
+    assert "parallel" in report.summary().lower()
 
 
 def test_formats_agree_with_json():

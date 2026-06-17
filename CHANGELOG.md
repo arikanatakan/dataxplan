@@ -4,6 +4,29 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/), and the project uses
 [semantic versioning](https://semver.org/).
 
+## [0.1.3] - 2026-06-17
+
+### Fixed
+
+- Parallel plans: a `Parallel`-prefixed node (for example `Parallel Seq Scan` in
+  the text format) now reads as the same node type the JSON format reports, so
+  findings fire consistently across formats. Self-time percentages are clamped,
+  and the report flags parallel plans (their self times are total work across
+  workers, not wall-clock time).
+
+### Changed
+
+- Time-based findings now require a minimum absolute self time (`min_time_ms`,
+  default 50), so a small but high-percentage scan on an already-fast query is no
+  longer flagged; `nested_loop_blowup` also requires the inner side to be costly,
+  not just iterated often.
+
+### Added
+
+- A real-PostgreSQL integration test (run in CI) that checks parsing against live
+  EXPLAIN output in JSON, text, YAML and XML.
+- Type checking (mypy) and coverage in CI; the `thresholds` keys are documented.
+
 ## [0.1.2] - 2026-06-17
 
 ### Added

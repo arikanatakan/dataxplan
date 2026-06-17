@@ -172,6 +172,12 @@ runs the query, so use `analyze=False` for a plan-only estimate.
 | Context | optional catalog metadata (sizes, indexes, stale stats) that sharpens findings |
 | CLI | `dataxplan plan.json` (or stdin): summary, `--tree`, `--json`, `--compare` |
 
+The finding cut-offs can be tuned with `analyze(plan, thresholds={...})`. The keys
+and their defaults are `estimation_error_high` (100), `estimation_error_med` (10),
+`seq_scan_pct` (0.30), `filter_discard_ratio` (10), `nested_loop_loops` (1000),
+`heap_fetch_ratio` (0.10), `jit_pct` (0.25) and `min_time_ms` (50, the smallest
+self time a time-based finding is raised for).
+
 ## Examples
 
 Seven plans from public datasets and benchmarks (in [`examples/`](examples/)),
@@ -287,6 +293,10 @@ instead of a full scan.
   them with `thresholds=`.
 - **One captured run.** EXPLAIN ANALYZE times depend on machine, cache and load, so
   the analysis reflects the run you captured, not an average over runs.
+- **Parallel plans are approximate.** Under parallelism a node's de-looped time is
+  the total work across workers, not wall-clock time, so the self-time percentages
+  are approximate (the report flags this); the relative ranking of nodes still
+  holds.
 - **One statement at a time.** It analyses a single plan; it does not aggregate a
   workload or parse server logs.
 

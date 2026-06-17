@@ -62,7 +62,9 @@ def compute_metrics(plan: Plan) -> list[NodeMetrics]:
             self_t = max(0.0, incl - kids)
         else:
             self_t = None
-        pct = (self_t / denom) if (self_t is not None and denom) else None
+        # Clamped: under parallelism a node's de-looped time (total work across
+        # workers) can exceed the wall-clock execution time.
+        pct = min(1.0, self_t / denom) if (self_t is not None and denom) else None
 
         actual = node.actual_rows
         if actual is not None:
@@ -84,9 +86,14 @@ def compute_metrics(plan: Plan) -> list[NodeMetrics]:
     return out
 
 
+def _is_parallel(node) -> bool:
+    return (node.raw.get("Parallel Aware") in (True, "true")
+            or node.node_type in ("Gather", "Gather Merge"))
+
+
 def rollups(plan: Plan, metrics: list[NodeMetrics]) -> dict:
     timed = [m for m in metrics if m.self_time is not None]
-    top = sorted(timed, key=lambda m: m.self_time, reverse=True)[:5]
+    top = sorted(timed, key=lambda m: m.self_time or 0.0, reverse=True)[:5]
     errors = [m.estimation_error for m in metrics if m.estimation_error is not None]
     return {
         "execution_time_ms": plan.execution_time,
@@ -96,6 +103,7 @@ def rollups(plan: Plan, metrics: list[NodeMetrics]) -> dict:
         "max_depth": max((len(m.path) for m in metrics), default=0),
         "max_estimation_error": max(errors) if errors else None,
         "spilled_to_disk": any(m.spilled for m in metrics),
+        "parallel": any(_is_parallel(n) for n in plan.root.walk()),
         "total_shared_read_blocks": sum(m.shared_read for m in metrics),
         "top_self_time": [
             {"label": m.label, "self_time_ms": m.self_time, "pct_self": m.pct_self}

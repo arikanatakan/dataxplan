@@ -266,8 +266,15 @@ def _from_xml(text: str) -> dict:
 
 
 def _node_identity(body: str) -> dict:
-    """Split a text node header into Node Type, relation and index."""
+    """Split a text node header into Node Type, relation and index.
+
+    A leading ``Parallel`` is normalised away (and recorded as ``Parallel Aware``)
+    so a parallel scan reads as the same node type the JSON format reports.
+    """
     out: dict = {}
+    if body.startswith("Parallel "):
+        body = body[len("Parallel "):]
+        out["Parallel Aware"] = True
     if " using " in body:
         node_type, rest = body.split(" using ", 1)
         if " on " in rest:

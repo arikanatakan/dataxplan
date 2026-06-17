@@ -71,6 +71,9 @@ class Report:
         if r.get("max_estimation_error"):
             lines.append(f"  worst row estimate   {r['max_estimation_error']:.0f}x off")
         lines.append(f"  spilled to disk      {'yes' if r['spilled_to_disk'] else 'no'}")
+        if r.get("parallel"):
+            lines.append("  note: parallel plan, so self times are total work "
+                         "across workers, not wall-clock time")
         if r.get("top_self_time") and r["top_self_time"][0]["self_time_ms"] is not None:
             lines.append("  top by self time:")
             for e in r["top_self_time"]:

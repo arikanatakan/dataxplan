@@ -41,9 +41,9 @@ class Comparison:
     def summary(self) -> str:
         lines = [f"dataxplan compare - {self.verdict.upper()}"]
         if self.before_time_ms is not None and self.after_time_ms is not None:
-            d = "" if self.delta_pct is None else f" ({self.delta_pct:+.0%})"
+            pct = "" if self.delta_pct is None else f" ({self.delta_pct:+.0%})"
             lines.append(f"  execution time   {ms(self.before_time_ms)} -> "
-                         f"{ms(self.after_time_ms)}{d}")
+                         f"{ms(self.after_time_ms)}{pct}")
         if self.appeared:
             lines.append(f"  new nodes        {', '.join(self.appeared)}")
         if self.disappeared:

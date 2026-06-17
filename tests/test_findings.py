@@ -37,3 +37,15 @@ def test_severity_high_seq_scan(load):
                if f.id == "seq_scan_hot")
     assert seq.severity == "high"
     assert seq.suggestion
+
+
+def test_fast_query_seq_scan_not_flagged():
+    # 80% of the time, but only 4 ms total: not worth flagging.
+    fast = [{"Plan": {
+        "Node Type": "Seq Scan", "Relation Name": "small",
+        "Plan Rows": 100, "Plan Width": 8, "Actual Startup Time": 0.0,
+        "Actual Total Time": 4.0, "Actual Rows": 100, "Actual Loops": 1},
+        "Execution Time": 5.0}]
+    report = dataxplan.analyze(fast)
+    assert "seq_scan_hot" not in {f.id for f in report.findings}
+    assert report.ok
